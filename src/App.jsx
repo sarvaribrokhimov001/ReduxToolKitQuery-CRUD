@@ -1,15 +1,16 @@
 import React from 'react'
-import { useGetUsersQuery } from './features/UsersSlice'
+import { useDeleteUsersMutation, useGetUsersQuery } from './features/UsersSlice'
 
 const App = () => {
   const {
     data : users,
     isError , 
-    isLoading , 
-    isFetching , 
+    isLoading ,  
     isSuccess ,
     error, 
-    refetch} = useGetUsersQuery();
+    } = useGetUsersQuery();
+
+    const [deleteUsers , {isLoading : isDeleting}] = useDeleteUsersMutation();
 
     if(isLoading) return <h1> Loading.... </h1>
     if(isError) return (
@@ -22,6 +23,8 @@ const App = () => {
       return (
         <div className="w-full min-h-screen flex flex-col items-center py-[30px] bg-gray-950">
           <h2 className="text-[40px] font-black mb-6 text-white"> Users </h2>
+
+          {isDeleting ? <h1 className='text-white mb-[20px] text-[30px] font-bold'> Deleting.... </h1> : null}
 
     {/* <div className="flex gap-5 mb-[20px] justify-center items-center">
       <input onChange={(e) => {
@@ -66,7 +69,9 @@ const App = () => {
                         hover:bg-green-600 hover:text-white hover: border-[5px] hover:border-white"> View </button>
                       <button className="w-[100px] h-[35px] rounded-[20px] bg-black text-yellow-400 font-bold border-[5px] text-[17px] border-yellow-400
                         hover:bg-yellow-400 hover:text-white hover:border-[5px] hover:border-white"> Edit </button>
-                      <button className="w-[100px] h-[35px] rounded-[20px] bg-black text-red-600 font-bold border-[5px] text-[17px] border-red-600
+                      <button onClick={() => {
+                        deleteUsers(id)
+                      }} className="w-[100px] h-[35px] rounded-[20px] bg-black text-red-600 font-bold border-[5px] text-[17px] border-red-600
                         hover:bg-red-600 hover:text-white hover:border-[5px] hover:border-white"> Delete </button>
                     </td>
                   </tr>
