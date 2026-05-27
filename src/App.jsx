@@ -1,85 +1,162 @@
-import React from 'react'
-import { useDeleteUsersMutation, useGetUsersQuery } from './features/UsersSlice'
+import React, { useState } from "react";
+import {useAddUserMutation, useDeleteUserMutation, useGetUsersQuery, useUpdateUserMutation} from "./features/UsersSlice";
 
 const App = () => {
   const {
-    data : users,
-    isError , 
-    isLoading ,  
-    isSuccess ,
-    error, 
-    } = useGetUsersQuery();
+    data: users = [],
+    isLoading,
+    isError,
+    error,
+  } = useGetUsersQuery();
 
-    const [deleteUsers , {isLoading : isDeleting}] = useDeleteUsersMutation();
+  const [addUser] = useAddUserMutation();
+  const [deleteUser] = useDeleteUserMutation();
+  const [updateUser] = useUpdateUserMutation();
+  const [username, setUsername] = useState("");
+  const [selectedUser, setSelectedUser] = useState(null);
+  const [editMode, setEditMode] = useState(false);
 
-    if(isLoading) return <h1> Loading.... </h1>
-    if(isError) return (
-      <div>
-        <h3> {error.message} </h3>
-        <h3> {error.status} </h3>
-      </div>
+  const handleAdd = async () => {
+    if (!username.trim()) return;
+
+    await addUser({
+      name: username,
+      email: "newuser@gmail.com",
+      phone: "+998901234567",
+      address: {
+        city: "Tashkent",
+        street: "Chilonzor",
+      },
+      company: {
+        name: "Frontend Company",
+      },
+    });
+
+    setUsername("");
+  };
+
+  const handleDelete = async (id) => {
+    await deleteUser(id);
+  };
+
+  const handleView = (user) => {
+    setSelectedUser(user);
+    setEditMode(false);
+  };
+
+  const handleEdit = (user) => {
+    setSelectedUser(user);
+    setUsername(user.name);
+    setEditMode(true);
+  };
+
+  const handleSave = async () => {
+    await updateUser({
+      id: selectedUser.id,
+      updatedUser: {
+        ...selectedUser,
+        name: username,
+      },
+    });
+
+    setEditMode(false);
+    setUsername("");
+    setSelectedUser(null);
+  };
+
+  if (isLoading)
+    return (
+      <h1 className="text-white text-center text-[50px]"> Loading... </h1>
     );
-    if(isSuccess) 
-      return (
-        <div className="w-full min-h-screen flex flex-col items-center py-[30px] bg-gray-950">
-          <h2 className="text-[40px] font-black mb-6 text-white"> Users </h2>
 
-          {isDeleting ? <h1 className='text-white mb-[20px] text-[30px] font-bold'> Deleting.... </h1> : null}
+  if (isError)
+    return (
+      <h1 className="text-red-500 text-center text-[50px]"> {error?.error} </h1>
+    );
 
-    {/* <div className="flex gap-5 mb-[20px] justify-center items-center">
-      <input onChange={(e) => {
-        setAddBtn(e.target.value);
-      }} value={addBtn} 
-      type="text" 
-      placeholder="Add new User" 
-      className="w-[220px] h-[40px] bg-gray-800 rounded-[20px] pl-[20px] focus:bg-black focus:text-red-700 capitalize font-bold text-[18px]"
-      />
-      <button className="w-[130px] h-[35px] rounded-[20px] bg-black text-green-600 font-bold border-[5px] 
-        text-[17px] border-green-600 hover:bg-green-600 hover:text-white hover: border-[5px] hover:border-white" 
-        onClick={handleAdd}> +AddBtn 
-      </button>
-    </div> */}
+  return (
+    <div className="w-full min-h-screen bg-gray-950 p-[30px]">
+      <h1 className="text-center text-white text-[45px] font-black mb-[40px]"> Users </h1>
+      <div className="flex justify-center gap-5 mb-[40px]">
+        <input className="w-[300px] h-[45px] rounded-[20px] bg-gray-800 text-white pl-[20px] outline-none" type="text" placeholder="Enter username..." value={username} onChange={(e) =>
+            setUsername(e.target.value)
+          } />
 
-      <div>
-         <table className="w-full border-collapse text-sm">
-            <thead className="bg-gray-800/50 text-xs uppercase tracking-wider text-neutral-500">
-                <tr className="transition-colors hover:bg-gray-800/30">
-                    <th className="px-6 py-4 font-bold text-center"> T/r </th>
-                    <th className="px-6 py-4 font-bold text-center"> Username </th>
-                    <th className="px-6 py-4 font-bold text-center"> PhoneNumber </th>
-                    <th className="px-6 py-4 font-bold text-center"> Email </th>
-                    <th className="px-6 py-4 font-bold text-center"> City </th>
-                    <th className="px-6 py-4 font-bold text-center"> Street </th>
-                    <th className="px-6 py-4 font-bold text-center"> CompanyName </th>
-                    <th className="px-6 py-4 font-bold text-center"> Actions </th>
-                </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-800">
-                {users.map(({id , name , phone , email , address , company})=> (
-                  <tr className="transition-colors hover:bg-gray-800/30 font-bold" key={id}>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300 text-[18px]"> {id} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300"> {name} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300"> {phone} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300"> {email} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300"> {address?.city} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300"> {address?.street} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300"> {company?.name} </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-gray-300">
-                      <button className="w-[100px] h-[35px] rounded-[20px] bg-black text-green-600 font-bold border-[5px] text-[17px] border-green-600
-                        hover:bg-green-600 hover:text-white hover: border-[5px] hover:border-white"> View </button>
-                      <button className="w-[100px] h-[35px] rounded-[20px] bg-black text-yellow-400 font-bold border-[5px] text-[17px] border-yellow-400
-                        hover:bg-yellow-400 hover:text-white hover:border-[5px] hover:border-white"> Edit </button>
-                      <button onClick={() => {
-                        deleteUsers(id)
-                      }} className="w-[100px] h-[35px] rounded-[20px] bg-black text-red-600 font-bold border-[5px] text-[17px] border-red-600
-                        hover:bg-red-600 hover:text-white hover:border-[5px] hover:border-white"> Delete </button>
-                    </td>
-                  </tr>
-        ))}
-           </tbody>
-        </table>
+        {!editMode ? (
+          <button onClick={handleAdd} className="w-[140px] h-[45px] rounded-[20px] bg-green-600 text-white font-bold hover:bg-green-700">
+            Add User
+          </button>
+        ) : (
+          <button onClick={handleSave} className="w-[140px] h-[45px] rounded-[20px] bg-yellow-500 text-white font-bold hover:bg-yellow-600">
+            Save Edit
+          </button>
+        )}
       </div>
+
+      {selectedUser && !editMode && (
+        <div className="w-[400px] bg-gray-900 mx-auto p-[20px] rounded-[20px] mb-[40px]">
+          <h2 className="text-white text-[30px] font-bold mb-[15px]"> User Details </h2>
+          <p className="text-gray-300">
+            <span className="font-bold">
+              Name:
+            </span>{" "}
+            {selectedUser.name}
+          </p>
+
+          <p className="text-gray-300">
+            <span className="font-bold">
+              Email:
+            </span>{" "}
+            {selectedUser.email}
+          </p>
+
+          <p className="text-gray-300">
+            <span className="font-bold">
+              Phone:
+            </span>{" "}
+            {selectedUser.phone}
+          </p>
+
+          <p className="text-gray-300">
+            <span className="font-bold">
+              City:
+            </span>{" "}
+            {selectedUser.address?.city}
+          </p>
+        </div>
+      )}
+
+      <table className="w-full text-white">
+        <thead className="bg-gray-800 h-[60px]">
+          <tr>
+            <th> ID </th>
+            <th> Username </th>
+            <th> Phone </th>
+            <th> Email </th>
+            <th> City </th>
+            <th> Company </th>
+            <th> Actions </th>
+          </tr>
+        </thead>
+        <tbody>
+          {users.map((user) => (
+            <tr key={user.id} className="text-center border-b border-gray-800 h-[70px] hover:bg-gray-900">
+              <td> {user.id} </td>
+              <td> {user.name} </td>
+              <td> {user.phone} </td>
+              <td> {user.email} </td>
+              <td> {user.address?.city} </td>
+              <td> {user.company?.name} </td>
+              <td className="flex justify-center gap-3 py-[15px]">
+                <button onClick={() => handleView(user)} className="w-[90px] h-[35px] bg-blue-600 rounded-[20px] hover:bg-blue-700"> View </button>
+                <button onClick={() => handleEdit(user)} className="w-[90px] h-[35px] bg-yellow-500 rounded-[20px] hover:bg-yellow-600"> Edit </button>
+                <button onClick={() => handleDelete(user.id)} className="w-[90px] h-[35px] bg-red-600 rounded-[20px] hover:bg-red-700"> Delete </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
     </div>
-      )
-    }
-export default App
+  );
+};
+export default App;
